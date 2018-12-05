@@ -1,0 +1,14 @@
+.config.js
+.DS_Store
+*.iml
+npm-debug.log
+node_modules
+coverage
+*.swp
+.node-xml*
+contracts/test*
+
+.vscode/
+build/
+bin/
+data/
