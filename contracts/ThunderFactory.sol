@@ -28,22 +28,14 @@ contract ThunderFactory is XAccessControl {
         uint256 minBalance;
         uint64  ripeDays;
         uint64  rewardRatio;
-        uint64  rewardRatioX;
     }
 
     enum strengthLevel {
         None,
-
-        // Normal Token
-        Strength,
-        Thunder,
-        Mjolnir,
-
-        // X Token
-        VeThorX,
-        StrengthX,
-        ThunderX,
-        MjolnirX
+        Connect,
+        Harbor,
+        Consensus,
+        Legacy
     }
 
     /// @dev Mapping from strength level to token params
@@ -65,7 +57,6 @@ contract ThunderFactory is XAccessControl {
     Token[] internal tokens;
     /// @dev The counter of normal tokens and xtokens
     uint64 public normalTokenCount;
-    uint64 public xTokenCount;
 
     /// @dev Mapping from token ID to owner and its reverse mapping.
     ///      Every address can only hold one token at most.
@@ -86,36 +77,10 @@ contract ThunderFactory is XAccessControl {
         // the index of valid tokens should start from 1
         tokens.push(Token(0, 0, false, strengthLevel.None, 0));
 
-        // The params of normal token
-        strengthParams[1] = TokenParameters(1000000 ether, 10, 0, 100);     // Strength
-        strengthParams[2] = TokenParameters(5000000 ether, 20, 0, 150);     // Thunder
-        strengthParams[3] = TokenParameters(15000000 ether, 30, 0, 200);    // Mjolnir
-
-        // The params of X tokens
-        strengthParams[4] = TokenParameters(600000 ether, 0, 25, 0);        // VeThorX
-        strengthParams[5] = TokenParameters(1600000 ether, 30, 100, 100);   // StrengthX
-        strengthParams[6] = TokenParameters(5600000 ether, 60, 150, 150);   // ThunderX
-        strengthParams[7] = TokenParameters(15600000 ether, 90, 200, 200);  // MjolnirX
-    }
-
-    /// @dev To tell whether the address is holding an x token
-    function isX(address _target)
-        public
-        view
-        returns(bool)
-    {
-        // return false if given address doesn't hold a token
-        return tokens[ownerToId[_target]].level >= strengthLevel.VeThorX;
-    }
-
-    /// @dev To tell whether the address is holding a normal token
-    function isNormalToken(address _target)
-        public
-        view
-        returns(bool)
-    {
-        // return false if given address doesn't hold a token
-        return isToken(_target) && !isX(_target);
+        strengthParams[1] = TokenParameters(100000 ether, 30, 0);     // Connect
+        strengthParams[2] = TokenParameters(2500000 ether, 45, 8);    // Harbor
+        strengthParams[3] = TokenParameters(10000000 ether, 60, 32);  // Consensus
+        strengthParams[4] = TokenParameters(30000000 ether, 90, 57);  // Legacy
     }
 
     /// @dev To tell whether the address is holding a token(x or normal)
@@ -128,7 +93,7 @@ contract ThunderFactory is XAccessControl {
     }
 
     /// @dev Apply for a token or upgrade the holding token.
-    ///      Note that bypass the level is forbided, it has to upgrade one by one.
+    ///      Note that bypassing a level is forbidden, it has to upgrade one by one.
     function applyUpgrade(strengthLevel _toLvl)
         external
         whenNotPaused
@@ -143,11 +108,10 @@ contract ThunderFactory is XAccessControl {
         require(!token.onUpgrade, "still upgrading");
         require(!saleAuction.isOnAuction(_tokenId), "cancel auction first");
 
-        // Bypass check. Note that normal token couldn't upgrade to x token.
+        // Bypass check.
         require(
             uint8(token.level) + 1 == uint8(_toLvl)
-            && _toLvl != strengthLevel.VeThorX
-            && _toLvl <= strengthLevel.MjolnirX,
+            && _toLvl <= strengthLevel.Legacy,
             "invalid _toLvl");
         // The balance of msg.sender must meet the requirement of target level's minbalance
         require(msg.sender.balance >= strengthParams[uint8(_toLvl)].minBalance, "insufficient balance");
@@ -207,7 +171,7 @@ contract ThunderFactory is XAccessControl {
         returns(uint256, uint64, uint64, uint64)
     {
         TokenParameters memory _params = strengthParams[uint8(_level)];
-        return (_params.minBalance, _params.ripeDays, _params.rewardRatio, _params.rewardRatioX);
+        return (_params.minBalance, _params.ripeDays, _params.rewardRatio);
     }
 
     /// @dev To tell whether a token can be transfered.
@@ -276,15 +240,13 @@ contract ThunderFactory is XAccessControl {
         external
         onlyOperator
     {
-        require(_lvl == strengthLevel.None || _lvl >= strengthLevel.VeThorX, "strengthLevel must be 0 or 4 or greater");
         require(!_exist(_addr), "you already hold a token");
 
         // This will assign ownership, and also emit the Transfer event.
         uint256 newTokenId = _add(_addr, _lvl, _onUpgrade);
 
         // Update token counter
-        if(strengthLevel.Strength <= _lvl && _lvl <= strengthLevel.Mjolnir) normalTokenCount++;
-        else if(strengthLevel.VeThorX <= _lvl && _lvl <= strengthLevel.MjolnirX) xTokenCount++;
+        normalTokenCount++;
 
         // For data imgaration
         if (_onUpgrade) {
@@ -346,15 +308,11 @@ contract ThunderFactory is XAccessControl {
         }
 
         // Update token counter
-        if(strengthLevel.Strength <= _fromLvl && _fromLvl <= strengthLevel.Mjolnir) {
+        if(strengthLevel.Connect <= _fromLvl && _fromLvl <= strengthLevel.Legacy) {
             normalTokenCount--;
-        } else if(strengthLevel.VeThorX <= _fromLvl && _fromLvl <= strengthLevel.MjolnirX) {
-            xTokenCount--;
         }
-        if(strengthLevel.Strength <= _toLvl && _toLvl <= strengthLevel.Mjolnir ) {
+        if(strengthLevel.Connect <= _toLvl && _toLvl <= strengthLevel.Legacy ) {
             normalTokenCount++;
-        } else if(strengthLevel.VeThorX <= _toLvl && _toLvl <= strengthLevel.MjolnirX ) {
-            xTokenCount++;
         }
 
         emit LevelChanged(_tokenId, _owner, _fromLvl,  _toLvl);

@@ -65,7 +65,7 @@ contract XOwnership is ThunderFactory, IVIP181Basic, SupportsInterface {
         view
         returns(uint256)
     {
-        return uint256(normalTokenCount + xTokenCount);
+        return uint256(normalTokenCount);
     }
 
     function setTokenMetadataBaseURI(string _newBaseURI)
