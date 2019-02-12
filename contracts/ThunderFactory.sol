@@ -48,7 +48,7 @@ contract ThunderFactory is XAccessControl {
 
     /// @dev Mapping from strength level to token params
     mapping(uint8 => TokenParameters) internal strengthParams;
-    
+
     /// @dev The main Token struct. Each token is represented by a copy of this structure.
     struct Token {
         uint64 createdAt;
@@ -81,16 +81,16 @@ contract ThunderFactory is XAccessControl {
     event CancelUpgrade(uint256 indexed _tokenId, address indexed _owner);
     event LevelChanged(uint256 indexed _tokenId, address indexed _owner, strengthLevel _fromLevel, strengthLevel _toLevel);
     event AuctionCancelled(uint256 indexed _auctionId, uint256 indexed _tokenId);
-    
+
     constructor() public {
         // the index of valid tokens should start from 1
         tokens.push(Token(0, 0, false, strengthLevel.None, 0));
-        
+
         // The params of normal token
         strengthParams[1] = TokenParameters(1000000 ether, 10, 0, 100);     // Strength
         strengthParams[2] = TokenParameters(5000000 ether, 20, 0, 150);     // Thunder
         strengthParams[3] = TokenParameters(15000000 ether, 30, 0, 200);    // Mjolnir
-        
+
         // The params of X tokens
         strengthParams[4] = TokenParameters(600000 ether, 0, 25, 0);        // VeThorX
         strengthParams[5] = TokenParameters(1600000 ether, 30, 100, 100);   // StrengthX
@@ -142,7 +142,7 @@ contract ThunderFactory is XAccessControl {
         Token storage token = tokens[_tokenId];
         require(!token.onUpgrade, "still upgrading");
         require(!saleAuction.isOnAuction(_tokenId), "cancel auction first");
-        
+
         // Bypass check. Note that normal token couldn't upgrade to x token.
         require(
             uint8(token.level) + 1 == uint8(_toLvl)
@@ -154,7 +154,7 @@ contract ThunderFactory is XAccessControl {
 
         token.onUpgrade = true;
         token.updatedAt = uint64(now);
-        
+
         emit NewUpgradeApply(_tokenId, msg.sender, _toLvl, uint64(block.timestamp), uint64(block.number));
     }
 
@@ -164,7 +164,7 @@ contract ThunderFactory is XAccessControl {
         public
     {
         require(_exist(_tokenId), "token not exist");
-        
+
         Token storage token = tokens[_tokenId];
         address _owner = idToOwner[_tokenId];
 
@@ -211,8 +211,8 @@ contract ThunderFactory is XAccessControl {
     }
 
     /// @dev To tell whether a token can be transfered.
-    function canTransfer(uint256 _tokenId) 
-        public 
+    function canTransfer(uint256 _tokenId)
+        public
         view
         returns(bool)
     {
@@ -248,7 +248,7 @@ contract ThunderFactory is XAccessControl {
         require(!saleAuction.isOnAuction(_tokenId), "cancel auction first");
 
         tokens[_tokenId].onUpgrade = false;
-        
+
         _levelChange(_tokenId, _toLvl);
     }
 
@@ -270,17 +270,18 @@ contract ThunderFactory is XAccessControl {
         _levelChange(_tokenId, _toLvl);
     }
 
-    /// @dev Adds a new token and stores it. This method should be called 
+    /// @dev Adds a new token and stores it. This method should be called
     ///      when the input data is known to be valid and will generate a Transfer event.
     function addToken(address _addr, strengthLevel _lvl, bool _onUpgrade, uint64 _applyUpgradeTime, uint64 _applyUpgradeBlockno)
         external
         onlyOperator
     {
+        require(_lvl == strengthLevel.None || _lvl >= strengthLevel.VeThorX, "strengthLevel must be 0 or 4 or greater");
         require(!_exist(_addr), "you already hold a token");
 
         // This will assign ownership, and also emit the Transfer event.
         uint256 newTokenId = _add(_addr, _lvl, _onUpgrade);
-        
+
         // Update token counter
         if(strengthLevel.Strength <= _lvl && _lvl <= strengthLevel.Mjolnir) normalTokenCount++;
         else if(strengthLevel.VeThorX <= _lvl && _lvl <= strengthLevel.MjolnirX) xTokenCount++;
@@ -326,7 +327,7 @@ contract ThunderFactory is XAccessControl {
         delete idToOwner[_tokenId];
         delete ownerToId[_owner];
         delete tokens[_tokenId];
-        // 
+        //
         emit Transfer(_owner, 0, _tokenId);
     }
 
