@@ -18,8 +18,8 @@ contract XOwnership is ThunderFactory, IVIP181Basic, SupportsInterface {
 
     using SafeMath for uint256;
 
-    string public name = "VeChainThor Node Token";
-    string public symbol = "VNT";
+    string public name = "Safe Haven Node Token";
+    string public symbol = "SNT";
 
     string internal tokenMetadataBaseURI = "";
 
@@ -65,7 +65,7 @@ contract XOwnership is ThunderFactory, IVIP181Basic, SupportsInterface {
         view
         returns(uint256)
     {
-        return uint256(normalTokenCount + xTokenCount);
+        return uint256(normalTokenCount);
     }
 
     function setTokenMetadataBaseURI(string _newBaseURI)
