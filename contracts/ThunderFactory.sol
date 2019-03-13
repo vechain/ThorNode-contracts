@@ -168,7 +168,7 @@ contract ThunderFactory is XAccessControl {
     function getTokenParams(strengthLevel _level)
         public
         view
-        returns(uint256, uint64, uint64, uint64)
+        returns(uint256, uint64, uint64)
     {
         TokenParameters memory _params = strengthParams[uint8(_level)];
         return (_params.minBalance, _params.ripeDays, _params.rewardRatio);
