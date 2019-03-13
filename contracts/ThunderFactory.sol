@@ -77,7 +77,7 @@ contract ThunderFactory is XAccessControl {
         // the index of valid tokens should start from 1
         tokens.push(Token(0, 0, false, strengthLevel.None, 0));
 
-        strengthParams[1] = TokenParameters(100000 ether, 30, 0);     // Connect
+        strengthParams[1] = TokenParameters(1000000 ether, 30, 0);     // Connect
         strengthParams[2] = TokenParameters(2500000 ether, 45, 8);    // Harbor
         strengthParams[3] = TokenParameters(10000000 ether, 60, 32);  // Consensus
         strengthParams[4] = TokenParameters(30000000 ether, 90, 57);  // Legacy
