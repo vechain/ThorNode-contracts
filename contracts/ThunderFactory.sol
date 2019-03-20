@@ -7,6 +7,7 @@ pragma solidity ^0.4.24;
 
 import "./XAccessControl.sol";
 import "./auction/ClockAuction.sol";
+import "./utility/interfaces/IVIP181.sol";
 
 contract IEnergy {
     function transfer(address _to, uint256 _amount) external;
@@ -15,6 +16,9 @@ contract IEnergy {
 contract ThunderFactory is XAccessControl {
 
     IEnergy constant Energy = IEnergy(uint160(bytes6("Energy")));
+
+    // This is the token contract address for the token that is required to be held in order to apply for a node.
+    IVIP181 public requiredToken;
 
     /// @dev The address of the ClockAuction contract that handles sales of xtoken
     ClockAuction public saleAuction;
@@ -73,7 +77,9 @@ contract ThunderFactory is XAccessControl {
     event LevelChanged(uint256 indexed _tokenId, address indexed _owner, strengthLevel _fromLevel, strengthLevel _toLevel);
     event AuctionCancelled(uint256 indexed _auctionId, uint256 indexed _tokenId);
 
-    constructor() public {
+    constructor(address requiredTokenAddress) public {
+        requiredToken = IVIP181(requiredTokenAddress);
+
         // the index of valid tokens should start from 1
         tokens.push(Token(0, 0, false, strengthLevel.None, 0));
 
@@ -114,7 +120,7 @@ contract ThunderFactory is XAccessControl {
             && _toLvl <= strengthLevel.Legacy,
             "invalid _toLvl");
         // The balance of msg.sender must meet the requirement of target level's minbalance
-        require(msg.sender.balance >= strengthParams[uint8(_toLvl)].minBalance, "insufficient balance");
+        require(requiredToken.balanceOf(msg.sender) >= strengthParams[uint8(_toLvl)].minBalance, "insufficient balance");
 
         token.onUpgrade = true;
         token.updatedAt = uint64(now);
