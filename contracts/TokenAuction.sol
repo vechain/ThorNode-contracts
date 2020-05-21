@@ -61,7 +61,7 @@ contract TokenAuction is XOwnership {
 
         // Does some ownership trickery to create auctions in one tx.
         _approve(_tokenId, saleAuction);
-        
+
         auctionCount = auctionCount.add(1);
         // If token is already on any auction, this will throw
         saleAuction.createAuction(

@@ -48,7 +48,7 @@ contract XAccessControl is Pausable {
         emit OperatorUpdated(_operator, false);
     }
 
-    function addToBlackList(address _badGuy) 
+    function addToBlackList(address _badGuy)
         external
         onlyOwner
         whenNotPaused
